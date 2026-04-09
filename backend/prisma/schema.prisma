@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  admin
+  member
+}
+
+enum ActionType {
+  CUSTOMER_CREATED
+  CUSTOMER_UPDATED
+  CUSTOMER_DELETED
+  CUSTOMER_RESTORED
+  NOTE_ADDED
+  CUSTOMER_ASSIGNED
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  customers Customer[]
+  notes     Note[]
+  logs      ActivityLog[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  name           String
+  email          String   @unique
+  password       String
+  role           Role     @default(member)
+  refreshToken   String?
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  assignedCustomers Customer[] @relation("AssignedCustomers")
+  createdNotes      Note[]
+  performedLogs     ActivityLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([organizationId])
+  @@map("users")
+}
+
+model Customer {
+  id             String    @id @default(uuid())
+  name           String
+  email          String
+  phone          String?
+  deletedAt      DateTime?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  assignedToId   String?
+  assignedTo     User?   @relation("AssignedCustomers", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  notes          Note[]
+  logs           ActivityLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([email, organizationId])
+  @@index([organizationId])
+  @@index([assignedToId])
+  @@index([deletedAt])
+  @@index([name])
+  @@map("customers")
+}
+
+model Note {
+  id      String @id @default(uuid())
+  content String
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId])
+  @@index([organizationId])
+  @@map("notes")
+}
+
+model ActivityLog {
+  id         String     @id @default(uuid())
+  entityType String
+  entityId   String
+  action     ActionType
+  timestamp  DateTime   @default(now())
+
+  performedById  String
+  performedBy    User   @relation(fields: [performedById], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([entityId])
+  @@index([organizationId])
+  @@index([performedById])
+  @@index([customerId])
+  @@map("activity_logs")
+}
