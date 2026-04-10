@@ -6,7 +6,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Global prefix for all routes EXCEPT the root health check
   app.setGlobalPrefix('api/v1', {
     exclude: ['/'],
   });
@@ -29,7 +28,6 @@ async function bootstrap() {
 
   const isDevelopment = process.env.NODE_ENV !== 'production';
 
-  // Swagger only available in development
   if (isDevelopment) {
     const config = new DocumentBuilder()
       .setTitle('Multi-Tenant CRM API')

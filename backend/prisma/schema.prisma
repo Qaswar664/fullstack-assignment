@@ -6,7 +6,7 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─── Enums ───────────────────────────────────────────────────────────────────
+//Enums 
 
 enum Role {
   admin
@@ -22,7 +22,7 @@ enum ActionType {
   CUSTOMER_ASSIGNED
 }
 
-// ─── Models ──────────────────────────────────────────────────────────────────
+//Models
 
 model Organization {
   id        String   @id @default(uuid())
